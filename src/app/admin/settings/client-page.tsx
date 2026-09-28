@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useCallback, useRef } from "react";
 import { updateRestaurantAction, uploadMenuImageAction } from "@/app/admin/actions";
 import type { Restaurant } from "@/types/database";
-import QRCode from "react-qr-code";
+import { QRCodeSVG } from "qrcode.react";
 
 function toStr(v: string | null | undefined) { return v ?? ""; }
 
@@ -227,7 +227,7 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
         </div>
         <div className="shrink-0 p-6 bg-white border-2 border-brand-200 rounded-2xl shadow-sm flex flex-col items-center gap-3">
           <div ref={qrRef} className="bg-white p-2">
-            <QRCode value={qrUrl} size={180} level="H" fgColor="#2B1D18" />
+            <QRCodeSVG value={qrUrl} size={180} level="H" fgColor="#2B1D18" />
           </div>
           <span className="font-bold text-sm text-brand-700 uppercase tracking-widest">Scan for Menu</span>
         </div>
