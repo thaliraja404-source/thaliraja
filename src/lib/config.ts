@@ -12,10 +12,10 @@ export const RESTAURANT_CONFIG = {
   location: "Shivpuri, Madhya Pradesh, India",
 
   // ⚠️ Replace with the actual WhatsApp number (with country code, no + or spaces)
-  whatsappNumber: "919XXXXXXXXX",
+  whatsappNumber: "918269325226",
 
   // ⚠️ Replace with the actual phone number
-  phone: "+91 9XXXXXXXXX",
+  phone: "+91 8269325226",
 
   // Google Maps link provided by the restaurant owner
   googleMapsUrl: "https://maps.app.goo.gl/Hj9RPu5zhe2dzyu86",
