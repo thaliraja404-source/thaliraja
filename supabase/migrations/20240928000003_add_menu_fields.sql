@@ -1,0 +1,2 @@
+ALTER TABLE categories ADD COLUMN emoji TEXT;
+ALTER TABLE menu_items ADD COLUMN is_veg BOOLEAN DEFAULT true;

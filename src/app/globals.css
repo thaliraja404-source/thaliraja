@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand palette - Royal Gold */
+  --color-brand-50: #fdf8ec;
+  --color-brand-100: #f9edca;
+  --color-brand-200: #f0d58a;
+  --color-brand-300: #dbb85c;
+  --color-brand-400: #cc9f3a;
+  --color-brand-500: #C49A35;
+  --color-brand-600: #a87d25;
+  --color-brand-700: #8a6118;
+  --color-brand-800: #6e4c10;
+  --color-brand-900: #573c0c;
+  --color-brand-950: #2f1f06;
+
+  /* Cream Backgrounds & Deep Brown Text */
+  --color-cream-50: #FCFAF8;
+  --color-cream-100: #F6F3EB;
+  --color-cream-200: #EBE5D8;
+  --color-ink-800: #3D2B24;
+  --color-ink-900: #2B1D18;
+  --color-ink-950: #1C120E;
+
+  /* Accent */
+  --color-saffron: #C49A35;
+  --color-turmeric: #d4a82a;
+  --color-leaf: #2e7d32;
+  --color-leaf-light: #4caf50;
+}
+
+/* Global touch optimization — eliminates 300ms tap delay on ALL elements */
+body {
+  touch-action: manipulation;
+}
+
+/* Remove default tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scroll — only when user hasn't requested reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+  border-radius: 9999px;
+}
+
+/* Food card image zoom — mouse only, never blocks mobile taps */
+.img-zoom {
+  transition: transform 0.4s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .img-zoom:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease both;
+}
+
+/* Slide up for cart bar */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease both;
+}
+
+/* Bounce for cart item count badge */
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: pop 0.2s ease;
+}
