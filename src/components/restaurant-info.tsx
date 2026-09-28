@@ -9,9 +9,7 @@ export default function RestaurantInfo({ dbRestaurant }: { dbRestaurant?: Restau
   const location = dbRestaurant?.address || RESTAURANT_CONFIG.location;
   const googleMapsUrl = dbRestaurant?.maps_url || RESTAURANT_CONFIG.googleMapsUrl;
   const phone = dbRestaurant?.phone || RESTAURANT_CONFIG.phone;
-  const waUrl = dbRestaurant?.whatsapp_number 
-    ? `https://wa.me/${dbRestaurant.whatsapp_number.replace(/\D/g, "")}`
-    : buildWhatsAppContactUrl();
+  const waUrl = buildWhatsAppContactUrl(dbRestaurant?.whatsapp_number || undefined);
 
   const openingHours = {
     weekdays: dbRestaurant?.opening_hours_weekdays || RESTAURANT_CONFIG.openingHours.weekdays,
