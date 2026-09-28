@@ -24,7 +24,7 @@ export function buildWhatsAppOrderUrl(
   const message = buildOrderMessage(items, customer, total);
   const encodedMessage = encodeURIComponent(message);
   const waNumber = formatWhatsAppNumber(RESTAURANT_CONFIG.whatsappNumber);
-  return `https://wa.me/${waNumber}?text=${encodedMessage}`;
+  return `https://api.whatsapp.com/send/?phone=${waNumber}&text=${encodedMessage}`;
 }
 
 function buildOrderMessage(
@@ -74,5 +74,5 @@ Thank you! 🙏`;
  */
 export function buildWhatsAppContactUrl(customNumber?: string): string {
   const waNumber = formatWhatsAppNumber(customNumber || RESTAURANT_CONFIG.whatsappNumber);
-  return `https://wa.me/${waNumber}`;
+  return `https://api.whatsapp.com/send/?phone=${waNumber}`;
 }
