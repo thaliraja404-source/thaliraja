@@ -32,7 +32,7 @@ export default function ClientMenuPage({
       <RestaurantHeader dbRestaurant={restaurant} />
       
       {/* Hero Section */}
-      <FeaturedThaliCarousel items={items} />
+      <FeaturedThaliCarousel items={items} categories={categories} />
 
       <CategoryTabs categories={categories} active={activeCategory} onChange={setActiveCategory} />
 

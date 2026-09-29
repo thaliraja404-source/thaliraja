@@ -4,17 +4,24 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import type { FoodItem } from "@/types/menu";
+import type { UICategory } from "@/lib/api/menu";
 
 interface FeaturedThaliCarouselProps {
   items: FoodItem[];
+  categories: UICategory[];
 }
 
-export default function FeaturedThaliCarousel({ items }: FeaturedThaliCarouselProps) {
+export default function FeaturedThaliCarousel({ items, categories }: FeaturedThaliCarouselProps) {
   const { addItem, getQuantity, increaseQuantity } = useCart();
+  
+  // Find the category ID for "Thali"
+  const thaliCategory = categories.find(
+    (c) => c.label.toLowerCase() === "thali"
+  );
   
   // Filter for available thalis. Prioritize "Special Thali" to be first if it exists.
   const featuredItems = items.filter(
-    (item) => item.category === "thali" && item.available
+    (item) => thaliCategory && item.category === thaliCategory.id && item.available
   ).sort((a, b) => {
     if (a.name.toLowerCase().includes("special thali")) return -1;
     if (b.name.toLowerCase().includes("special thali")) return 1;
