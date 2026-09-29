@@ -10,7 +10,6 @@ export default function RestaurantInfo({ dbRestaurant }: { dbRestaurant?: Restau
   const googleMapsUrl = dbRestaurant?.maps_url || RESTAURANT_CONFIG.googleMapsUrl;
   const phone = dbRestaurant?.phone || RESTAURANT_CONFIG.phone;
   const waUrl = buildWhatsAppContactUrl(dbRestaurant?.whatsapp_number || undefined);
-  console.log("RestaurantInfo - Generated WA URL:", waUrl);
 
   const openingHours = {
     weekdays: dbRestaurant?.opening_hours_weekdays || RESTAURANT_CONFIG.openingHours.weekdays,
@@ -92,10 +91,7 @@ export default function RestaurantInfo({ dbRestaurant }: { dbRestaurant?: Restau
           >
             <span className="text-lg">💬</span> WhatsApp Us
           </a>
-          {/* DEBUG URL */}
-          <div className="text-[10px] text-red-500 overflow-hidden text-center opacity-50">
-            DEBUG: {waUrl}
-          </div>
+
         </div>
       </div>
 

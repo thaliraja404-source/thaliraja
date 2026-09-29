@@ -41,7 +41,7 @@ export default function ClientMenuPage({
                 className="w-full h-full object-cover img-zoom"
               />
               <div className="absolute top-3 left-3 bg-brand-600 text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow-md uppercase tracking-wider">
-                Chef's Special
+                Chef&apos;s Special
               </div>
             </div>
             <div className="p-5 sm:w-3/5 flex flex-col justify-center">
@@ -53,7 +53,7 @@ export default function ClientMenuPage({
               </div>
               <h2 className="text-2xl font-black text-ink-900 leading-tight mb-2">Special Thali</h2>
               <p className="text-ink-800 text-sm mb-4 line-clamp-2">
-                Paneer sabji, dal makhani, 4 roti, rice, raita, papad & gulab jamun. Our chef's pride.
+                Paneer sabji, dal makhani, 4 roti, rice, raita, papad &amp; gulab jamun. Our chef&apos;s pride.
               </p>
               <div className="flex items-center justify-between mt-auto">
                 <span className="text-xl font-black text-brand-700">₹180</span>

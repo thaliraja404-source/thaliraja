@@ -1,31 +1,97 @@
 import type { CartItem, CustomerInfo } from "@/types/order";
 import { RESTAURANT_CONFIG } from "./config";
 
+// ─── Phone Number Formatting ──────────────────────────────────────────────────
+
 /**
- * Cleans and formats any phone number into the international WhatsApp format.
- * Assuming Indian numbers (10 digits), it prefixes with 91.
+ * Cleans and formats any phone number string into the E.164 format required
+ * by WhatsApp Click-to-Chat (digits only, country code first, no +).
+ *
+ * Rules for Indian numbers:
+ *   • 10 digits starting with 6–9  → prepend "91"
+ *   • 11 digits starting with "0"  → strip leading 0, prepend "91"
+ *   • 12 digits starting with "91" → already in correct format, return as-is
+ *   • Anything else                → returns empty string (caller must handle)
+ *
+ * @example
+ *   formatWhatsAppNumber("8269325226")    → "918269325226"
+ *   formatWhatsAppNumber("+91 8269325226") → "918269325226"
+ *   formatWhatsAppNumber("918269325226")  → "918269325226"
+ *   formatWhatsAppNumber("08269325226")  → "918269325226"
+ *   formatWhatsAppNumber("")             → ""
  */
 export function formatWhatsAppNumber(rawNumber: string): string {
-  const cleaned = rawNumber.replace(/\D/g, "");
-  if (cleaned.length === 10) return `91${cleaned}`;
-  if (cleaned.length === 11 && cleaned.startsWith("0")) return `91${cleaned.slice(1)}`;
-  return cleaned; // Assumes it already includes the country code if it's 12 digits (e.g. 91...)
+  if (!rawNumber || !rawNumber.trim()) return "";
+
+  // Strip all non-digit characters (+, spaces, hyphens, brackets, etc.)
+  const digits = rawNumber.replace(/\D/g, "");
+
+  // 10-digit Indian mobile number (starts with 6, 7, 8 or 9)
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return `91${digits}`;
+  }
+
+  // 11-digit number with leading STD 0 (0XXXXXXXXXX)
+  if (digits.length === 11 && digits.startsWith("0")) {
+    const withoutLeadingZero = digits.slice(1);
+    if (/^[6-9]/.test(withoutLeadingZero)) {
+      return `91${withoutLeadingZero}`;
+    }
+  }
+
+  // 12-digit number already starting with 91
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits;
+  }
+
+  // Unrecognised format — return empty so callers can surface an error
+  return "";
+}
+
+// ─── WhatsApp URL Builders ────────────────────────────────────────────────────
+
+/**
+ * Generates a simple WhatsApp Click-to-Chat URL (no pre-filled message).
+ * Falls back to the RESTAURANT_CONFIG number when no customNumber is supplied.
+ *
+ * Uses the canonical wa.me domain which works on Android, iOS, desktop browsers
+ * and WhatsApp Web without popup-blocking issues when triggered by a user click.
+ */
+export function buildWhatsAppContactUrl(customNumber?: string): string {
+  const raw = customNumber || RESTAURANT_CONFIG.whatsappNumber;
+  const waNumber = formatWhatsAppNumber(raw);
+  if (!waNumber) {
+    // Graceful degradation: open wa.me root rather than a broken URL
+    return "https://wa.me/";
+  }
+  return `https://wa.me/${waNumber}`;
 }
 
 /**
- * Generates a WhatsApp deep-link URL with a pre-filled order message.
- * The WhatsApp number is sourced from RESTAURANT_CONFIG — never hardcoded here.
+ * Generates a WhatsApp Click-to-Chat URL with a pre-filled order message.
+ *
+ * @param items     Cart items (must be non-empty — caller should validate)
+ * @param customer  Validated customer details
+ * @param total     Calculated order total (from the cart context)
+ * @param restaurantWaNumber  Optional override; defaults to RESTAURANT_CONFIG
+ * @returns         Full wa.me URL with encoded message, or empty string on error
  */
 export function buildWhatsAppOrderUrl(
   items: CartItem[],
   customer: CustomerInfo,
-  total: number
+  total: number,
+  restaurantWaNumber?: string
 ): string {
+  const raw = restaurantWaNumber || RESTAURANT_CONFIG.whatsappNumber;
+  const waNumber = formatWhatsAppNumber(raw);
+  if (!waNumber) return "";
+
   const message = buildOrderMessage(items, customer, total);
   const encodedMessage = encodeURIComponent(message);
-  const waNumber = formatWhatsAppNumber(RESTAURANT_CONFIG.whatsappNumber);
-  return `https://api.whatsapp.com/send/?phone=${waNumber}&text=${encodedMessage}`;
+  return `https://wa.me/${waNumber}?text=${encodedMessage}`;
 }
+
+// ─── Internal helpers ─────────────────────────────────────────────────────────
 
 function buildOrderMessage(
   items: CartItem[],
@@ -34,25 +100,34 @@ function buildOrderMessage(
 ): string {
   const itemLines = items
     .map((item, index) => {
-      return `${index + 1}. ${item.food.name} × ${item.quantity} — ₹${
-        item.food.price * item.quantity
-      }`;
+      const lineTotal = item.food.price * item.quantity;
+      return `${index + 1}. ${item.food.name} × ${item.quantity}  @₹${item.food.price} = ₹${lineTotal}`;
     })
     .join("\n");
+
+  const subtotal = items.reduce(
+    (acc, item) => acc + item.food.price * item.quantity,
+    0
+  );
 
   const orderTypeLabel =
     customer.orderType === "pickup" ? "Pickup 🛍️" : "Delivery 🚚";
 
   const deliveryDetails =
     customer.orderType === "delivery"
-      ? `\nAddress: ${customer.address}${
+      ? `\nDelivery Address: ${customer.address}${
           customer.landmark ? `\nLandmark: ${customer.landmark}` : ""
         }`
       : "";
 
   const specialNote = customer.specialInstructions
-    ? `\nSpecial instructions: ${customer.specialInstructions}`
+    ? `\nSpecial Instructions: ${customer.specialInstructions}`
     : "";
+
+  const totalsSection =
+    subtotal !== total
+      ? `Subtotal: ₹${subtotal}\nTotal: ₹${total}`
+      : `Total: ₹${total}`;
 
   return `Hello ${RESTAURANT_CONFIG.name}! 👋
 
@@ -60,19 +135,13 @@ I'd like to place an order:
 
 ${itemLines}
 
-Total: ₹${total}
+──────────────
+${totalsSection}
 
+Customer Details:
 Name: ${customer.name}
 Phone: ${customer.phone}
-Order type: ${orderTypeLabel}${deliveryDetails}${specialNote}
+Order Type: ${orderTypeLabel}${deliveryDetails}${specialNote}
 
 Thank you! 🙏`;
-}
-
-/**
- * Generates a simple WhatsApp contact URL (no message).
- */
-export function buildWhatsAppContactUrl(customNumber?: string): string {
-  const waNumber = formatWhatsAppNumber(customNumber || RESTAURANT_CONFIG.whatsappNumber);
-  return `https://api.whatsapp.com/send/?phone=${waNumber}`;
 }

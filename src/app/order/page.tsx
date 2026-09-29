@@ -74,8 +74,8 @@ export default function OrderPage() {
     };
 
     const url = buildWhatsAppOrderUrl(items, customer, total);
-    clearCart();
     window.open(url, "_blank");
+    clearCart();
     router.push("/menu");
   }
 

@@ -7,6 +7,15 @@ import { QRCodeSVG } from "qrcode.react";
 
 function toStr(v: string | null | undefined) { return v ?? ""; }
 
+function Spinner() {
+  return (
+    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
+  );
+}
+
 interface FormState {
   name: string; tagline: string; description: string; phone: string;
   whatsapp_number: string; address: string; maps_url: string;
@@ -79,13 +88,6 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
   const cls = ("w-full px-4 py-2.5 border border-cream-200 rounded-xl bg-white text-ink-900 " +
     "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
     "disabled:opacity-50 disabled:cursor-not-allowed transition-colors");
-
-  const Spinner = () => (
-    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-    </svg>
-  );
 
   const qrRef = useRef<HTMLDivElement>(null);
   const qrUrl = "https://thaliraja.vercel.app/";
