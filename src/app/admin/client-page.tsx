@@ -550,8 +550,12 @@ function ItemForm({
         <label className="text-xs font-semibold text-stone-600 mb-1 block">Description</label>
         <textarea
           value={form.description || ""}
-          onChange={(e) => onChange({ ...form, description: e.target.value })}
-          className={inputCls}
+          onChange={(e) => {
+            onChange({ ...form, description: e.target.value });
+            e.target.style.height = 'auto';
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
+          className={`${inputCls} resize-none overflow-hidden`}
           rows={3}
           disabled={disabled}
         />

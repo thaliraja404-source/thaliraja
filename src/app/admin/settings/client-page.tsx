@@ -56,6 +56,13 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
     (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setSuccess(false);
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      
+      // Auto-resize for textareas
+      if (e.target.tagName.toLowerCase() === 'textarea') {
+        const target = e.target as HTMLTextAreaElement;
+        target.style.height = 'auto';
+        target.style.height = `${target.scrollHeight}px`;
+      }
     }, []
   );
 
@@ -141,11 +148,11 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
           </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-ink-900">Tagline</label>
-            <textarea id="settings-tagline" name="tagline" value={form.tagline} onChange={set("tagline")} disabled={isBusy} rows={2} placeholder="e.g. Freshly made with love" className={cls + " resize-y min-h-[60px]"} />
+            <textarea id="settings-tagline" name="tagline" value={form.tagline} onChange={set("tagline")} disabled={isBusy} rows={2} placeholder="e.g. Freshly made with love" className={cls + " resize-none overflow-hidden"} />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <label className="block text-sm font-bold text-ink-900">Description</label>
-            <textarea id="settings-description" name="description" value={form.description} onChange={set("description")} disabled={isBusy} rows={3} placeholder="A short description of your restaurant" className={cls + " resize-y min-h-[80px]"} />
+            <textarea id="settings-description" name="description" value={form.description} onChange={set("description")} disabled={isBusy} rows={3} placeholder="A short description of your restaurant" className={cls + " resize-none overflow-hidden"} />
           </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-ink-900">Phone Number</label>
