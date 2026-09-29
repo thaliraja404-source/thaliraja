@@ -32,6 +32,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
   const [isPaused, setIsPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -60,13 +61,42 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
     return null; // Don't show the section if no thalis are available
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsPaused(false);
+    if (!touchStart) return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+
+    const dx = touchEndX - touchStart.x;
+    const dy = touchEndY - touchStart.y;
+
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) {
+        prevSlide();
+      } else {
+        nextSlide();
+      }
+    }
+    
+    setTouchStart(null);
+  };
+
   return (
     <section 
-      className="bg-cream-100 px-4 py-6 border-b border-cream-200 overflow-hidden"
+      className="bg-cream-100 px-4 py-6 border-b border-cream-200 overflow-hidden touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="max-w-2xl mx-auto relative min-h-[320px] sm:min-h-[180px]">
         {/* Navigation controls - only show if there's more than 1 item */}
