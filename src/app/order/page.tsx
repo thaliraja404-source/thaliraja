@@ -20,9 +20,7 @@ export default function OrderPage() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [orderType, setOrderType] = useState<OrderType>("pickup");
-  const [address, setAddress] = useState("");
-  const [landmark, setLandmark] = useState("");
+  const [orderType, setOrderType] = useState<OrderType>("eat-here");
   const [instructions, setInstructions] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,8 +52,6 @@ export default function OrderPage() {
     if (!phone.trim()) newErrors.phone = "Please enter your phone number.";
     else if (!/^[6-9]\d{9}$/.test(phone.trim()))
       newErrors.phone = "Enter a valid 10-digit Indian mobile number.";
-    if (orderType === "delivery" && !address.trim())
-      newErrors.address = "Please enter your delivery address.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -68,8 +64,6 @@ export default function OrderPage() {
       name: name.trim(),
       phone: phone.trim(),
       orderType,
-      address: address.trim() || undefined,
-      landmark: landmark.trim() || undefined,
       specialInstructions: instructions.trim() || undefined,
     };
 
@@ -182,67 +176,27 @@ export default function OrderPage() {
               Order Type <span className="text-red-500">*</span>
             </p>
             <div className="grid grid-cols-2 gap-3 mt-2">
-              {(["pickup", "delivery"] as OrderType[]).map((type) => (
+              {(["eat-here", "parcel"] as OrderType[]).map((type) => (
                 <button
                   key={type}
-                  onClick={() => {
-                    setOrderType(type);
-                    if (type === "pickup")
-                      setErrors((prev) => ({ ...prev, address: undefined }));
-                  }}
-                  className={`py-3.5 rounded-xl border-2 text-sm font-bold transition-all touch-manipulation cursor-pointer ${
+                  onClick={() => setOrderType(type)}
+                  className={`p-3 rounded-xl border-2 text-sm font-bold transition-all touch-manipulation cursor-pointer flex flex-col items-center text-center gap-1 ${
                     orderType === type
                       ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
                       : "border-cream-200 bg-white text-ink-800 hover:border-cream-300"
                   }`}
                 >
-                  {type === "pickup" ? "🛍️ Pickup" : "🚚 Delivery"}
+                  <span className="text-xl">{type === "eat-here" ? "🍽️" : "🥡"}</span>
+                  <span>{type === "eat-here" ? "Eat Here" : "Parcel"}</span>
+                  <span className="text-[10px] font-normal opacity-80 leading-tight">
+                    {type === "eat-here" 
+                      ? "Enjoy your meal at the restaurant" 
+                      : "Get your order packed and take it away"}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Delivery address */}
-          {orderType === "delivery" && (
-            <div className="space-y-4 animate-fade-in pt-1">
-              <div>
-                <label htmlFor="address" className={labelClass}>
-                  Delivery Address <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="address"
-                  value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    setErrors((prev) => ({ ...prev, address: undefined }));
-                  }}
-                  placeholder="House no., street, area..."
-                  rows={2}
-                  className={inputClass}
-                  autoComplete="street-address"
-                />
-                {errors.address && (
-                  <p className={errorClass}>
-                    <span>⚠️</span> {errors.address}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="landmark" className={labelClass}>
-                  Landmark{" "}
-                  <span className="text-ink-800/50 font-normal">(optional)</span>
-                </label>
-                <input
-                  id="landmark"
-                  type="text"
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  placeholder="Near school, temple, etc."
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          )}
 
           {/* Special instructions */}
           <div>

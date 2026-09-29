@@ -5,14 +5,13 @@ export interface CartItem {
   quantity: number;
 }
 
-export type OrderType = "pickup" | "delivery";
+export type OrderType = "eat-here" | "parcel";
 
 export interface CustomerInfo {
   name: string;
   phone: string;
   orderType: OrderType;
-  address?: string;
-  landmark?: string;
+  tableNumber?: string;
   specialInstructions?: string;
 }
 

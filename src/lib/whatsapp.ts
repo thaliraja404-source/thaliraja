@@ -127,13 +127,11 @@ function buildOrderMessage(
   );
 
   const orderTypeLabel =
-    customer.orderType === "pickup" ? "Pickup" : "Delivery";
+    customer.orderType === "eat-here" ? "Eat Here" : "Parcel";
 
-  const deliveryDetails =
-    customer.orderType === "delivery"
-      ? "\nDelivery Address: " +
-        (customer.address ?? "") +
-        (customer.landmark ? "\nLandmark: " + customer.landmark : "")
+  const tableDetails =
+    customer.orderType === "eat-here" && customer.tableNumber
+      ? `\nTable Number: ${customer.tableNumber}`
       : "";
 
   const specialNote = customer.specialInstructions
@@ -161,7 +159,7 @@ function buildOrderMessage(
     `Name: ${customer.name}\n` +
     `Phone: ${customer.phone}\n` +
     `Order Type: ${orderTypeLabel}` +
-    deliveryDetails +
+    tableDetails +
     specialNote +
     "\n" +
     "\n" +

@@ -51,13 +51,11 @@ function buildOrderMessage(items, customer, total) {
   );
 
   const orderTypeLabel =
-    customer.orderType === "pickup" ? "Pickup" : "Delivery";
+    customer.orderType === "eat-here" ? "Eat Here" : "Parcel";
 
-  const deliveryDetails =
-    customer.orderType === "delivery"
-      ? "\nDelivery Address: " +
-        (customer.address ?? "") +
-        (customer.landmark ? "\nLandmark: " + customer.landmark : "")
+  const tableDetails =
+    customer.orderType === "eat-here" && customer.tableNumber
+      ? `\nTable Number: ${customer.tableNumber}`
       : "";
 
   const specialNote = customer.specialInstructions
@@ -83,7 +81,7 @@ function buildOrderMessage(items, customer, total) {
     `Name: ${customer.name}\n` +
     `Phone: ${customer.phone}\n` +
     `Order Type: ${orderTypeLabel}` +
-    deliveryDetails +
+    tableDetails +
     specialNote +
     "\n" +
     "\n" +
@@ -110,7 +108,7 @@ const sampleItems = [
 const sampleCustomer = {
   name: "Raj Kewat",
   phone: "9182693252",
-  orderType: "pickup",
+  orderType: "eat-here",
 };
 
 // ---------------------------------------------------------------------------
@@ -256,32 +254,43 @@ test("customer phone in message", () => {
   assert.ok(msg.includes("9182693252"));
 });
 
-test("order type 'Pickup' in message (no emoji)", () => {
+test("order type 'Eat Here' in message (no emoji)", () => {
   const url = buildWhatsAppOrderUrl(sampleItems, sampleCustomer, 190);
   const msg = decodeURIComponent(url.split("?text=")[1]);
-  assert.ok(msg.includes("Order Type: Pickup"), "missing order type");
-  // Must not contain surrogate pair emojis
+  assert.ok(msg.includes("Order Type: Eat Here"), "missing order type");
   assert.equal(msg.includes("\uD83D"), false, "must not contain emoji surrogate pairs");
 });
 
-test("order type 'Delivery' in message (no emoji)", () => {
-  const deliveryCustomer = {
+test("order type 'Parcel' in message (no emoji)", () => {
+  const parcelCustomer = {
     ...sampleCustomer,
-    orderType: "delivery",
-    address: "42 MG Road, Shivpuri",
-    landmark: "Near City Bank",
+    orderType: "parcel",
   };
-  const url = buildWhatsAppOrderUrl(sampleItems, deliveryCustomer, 190);
+  const url = buildWhatsAppOrderUrl(sampleItems, parcelCustomer, 190);
   const msg = decodeURIComponent(url.split("?text=")[1]);
-  assert.ok(msg.includes("Order Type: Delivery"), "missing delivery order type");
-  assert.ok(msg.includes("42 MG Road, Shivpuri"), "missing address");
-  assert.ok(msg.includes("Near City Bank"), "missing landmark");
+  assert.ok(msg.includes("Order Type: Parcel"), "missing parcel order type");
 });
 
-test("pickup order message does NOT include 'Delivery Address'", () => {
-  const url = buildWhatsAppOrderUrl(sampleItems, sampleCustomer, 190);
+test("table number included when provided for Eat Here", () => {
+  const tableCustomer = {
+    ...sampleCustomer,
+    orderType: "eat-here",
+    tableNumber: "5"
+  };
+  const url = buildWhatsAppOrderUrl(sampleItems, tableCustomer, 190);
   const msg = decodeURIComponent(url.split("?text=")[1]);
-  assert.equal(msg.includes("Delivery Address:"), false);
+  assert.ok(msg.includes("Table Number: 5"), "missing table number");
+});
+
+test("table number NOT included for Parcel even if present in object", () => {
+  const tableCustomer = {
+    ...sampleCustomer,
+    orderType: "parcel",
+    tableNumber: "5"
+  };
+  const url = buildWhatsAppOrderUrl(sampleItems, tableCustomer, 190);
+  const msg = decodeURIComponent(url.split("?text=")[1]);
+  assert.equal(msg.includes("Table Number:"), false, "should not have table number");
 });
 
 test("special instructions included when provided", () => {
