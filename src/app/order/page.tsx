@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
@@ -16,7 +16,7 @@ interface FormErrors {
 
 export default function OrderPage() {
   const router = useRouter();
-  const { items, total, subtotal, clearCart } = useCart();
+  const { items, total, subtotal, clearCart, isLoaded } = useCart();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -24,6 +24,40 @@ export default function OrderPage() {
   const [instructions, setInstructions] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormLoaded, setIsFormLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("thali_raja_checkout_v1");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.name) setName(parsed.name);
+        if (parsed.phone) setPhone(parsed.phone);
+        if (parsed.orderType === "eat-here" || parsed.orderType === "parcel") setOrderType(parsed.orderType);
+        if (parsed.instructions) setInstructions(parsed.instructions);
+      }
+    } catch (e) {
+      console.error("Failed to restore checkout info", e);
+    } finally {
+      setIsFormLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isFormLoaded) return;
+    try {
+      localStorage.setItem("thali_raja_checkout_v1", JSON.stringify({
+        name, phone, orderType, instructions
+      }));
+    } catch (e) {
+      console.error("Failed to save checkout info", e);
+    }
+  }, [name, phone, orderType, instructions, isFormLoaded]);
+
+  // Wait for cart hydration
+  if (!isLoaded || !isFormLoaded) {
+    return null;
+  }
 
   // Redirect if empty cart
   if (items.length === 0) {
