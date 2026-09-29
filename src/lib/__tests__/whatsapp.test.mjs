@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Unit tests for WhatsApp helper functions.
  * Run with:  node --test src/lib/__tests__/whatsapp.test.mjs
  *
@@ -39,7 +39,7 @@ function buildOrderMessage(items, customer, total) {
       return (
         `${index + 1}. ${item.food.name}` +
         ` x ${item.quantity}` +
-        ` @ Rs. ${item.food.price}` +
+        ` (Rs. ${item.food.price} each)` +
         ` = Rs. ${lineTotal}`
       );
     })
@@ -214,6 +214,18 @@ test("message uses 'Rs.' prefix (not rupee symbol)", () => {
   const msg = decodeURIComponent(url.split("?text=")[1]);
   assert.ok(msg.includes("Rs."), "should use 'Rs.' prefix");
   assert.equal(msg.includes("\u20B9"), false, "must not contain rupee symbol U+20B9");
+});
+
+test("item format uses (Rs. X each) and not @ symbol", () => {
+  const multiItems = [
+    { food: { id: "1", name: "Full Thali", price: 120 }, quantity: 1 },
+    { food: { id: "2", name: "Paneer Thali", price: 150 }, quantity: 2 },
+  ];
+  const url = buildWhatsAppOrderUrl(multiItems, sampleCustomer, 420);
+  const msg = decodeURIComponent(url.split("?text=")[1]);
+  assert.ok(msg.includes("(Rs. 120 each)"), "unit price format wrong for item 1");
+  assert.ok(msg.includes("(Rs. 150 each)"), "unit price format wrong for item 2");
+  assert.equal(msg.includes("@ Rs."), false, "must not use '@ Rs.' format");
 });
 
 test("correct line total: 1 x 120 = Rs. 120", () => {

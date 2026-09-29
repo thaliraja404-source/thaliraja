@@ -115,7 +115,7 @@ function buildOrderMessage(
       return (
         `${index + 1}. ${item.food.name}` +
         ` x ${item.quantity}` +
-        ` @ Rs. ${item.food.price}` +
+        ` (Rs. ${item.food.price} each)` +
         ` = Rs. ${lineTotal}`
       );
     })
