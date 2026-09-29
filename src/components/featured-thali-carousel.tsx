@@ -68,7 +68,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="max-w-2xl mx-auto relative h-[320px] sm:h-[180px]">
+      <div className="max-w-2xl mx-auto relative min-h-[320px] sm:min-h-[180px]">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 flex justify-between pointer-events-none px-1">
@@ -141,7 +141,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             return (
               <div
                 key={item.id}
-                className="absolute inset-0 w-full max-w-[95%] sm:max-w-full mx-auto"
+                className={`w-full max-w-[95%] sm:max-w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute inset-0"}`}
                 style={{
                   zIndex,
                   opacity,
@@ -193,7 +193,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                     <div className="flex flex-col mb-2 grow w-full">
                       <p 
                         id={`carousel-desc-${item.id}`}
-                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[80px] sm:max-h-[70px] pr-2 line-clamp-none" : "line-clamp-2"}`}
+                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "" : "line-clamp-2"}`}
                       >
                         {item.description}
                       </p>
