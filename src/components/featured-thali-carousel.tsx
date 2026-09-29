@@ -98,7 +98,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="max-w-2xl mx-auto relative min-h-[320px] sm:min-h-[180px]">
+      <div className="max-w-2xl mx-auto relative">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 justify-between pointer-events-none px-1">
@@ -223,7 +223,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                     <div className="flex flex-col mb-2 grow w-full">
                       <p 
                         id={`carousel-desc-${item.id}`}
-                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "" : "line-clamp-2"}`}
+                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full min-h-[40px] sm:min-h-[44px] ${expandedItems[item.id] ? "" : "line-clamp-2"}`}
                       >
                         {item.description}
                       </p>
@@ -271,7 +271,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
 
       {/* Pagination Dots */}
       {featuredItems.length > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-5">
+        <div className="flex justify-center items-center gap-2 mt-4">
           {featuredItems.map((_, index) => (
             <button
               key={index}
