@@ -155,9 +155,7 @@ function buildOrderMessage(
     itemLines +
     "\n" +
     "\n" +
-    "---\n" +
-    "\n" +
-    `## ${totalsSection}\n` +
+    `${totalsSection}\n` +
     "\n" +
     "Customer Details:\n" +
     `Name: ${customer.name}\n` +

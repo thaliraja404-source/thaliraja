@@ -77,9 +77,7 @@ function buildOrderMessage(items, customer, total) {
     itemLines +
     "\n" +
     "\n" +
-    "---\n" +
-    "\n" +
-    `## ${totalsSection}\n` +
+    `${totalsSection}\n` +
     "\n" +
     "Customer Details:\n" +
     `Name: ${customer.name}\n` +
@@ -293,11 +291,12 @@ test("special instructions included when provided", () => {
   assert.ok(msg.includes("No onion"));
 });
 
-test("message uses '---' separator (not box-drawing U+2500)", () => {
+test("message has no --- separator and no ## Markdown markers", () => {
   const url = buildWhatsAppOrderUrl(sampleItems, sampleCustomer, 190);
   const msg = decodeURIComponent(url.split("?text=")[1]);
-  assert.ok(msg.includes("---"), "separator missing");
-  assert.equal(msg.includes("\u2500"), false, "must not contain box-drawing char U+2500");
+  assert.equal(msg.includes("---"), false, "must not contain --- separator");
+  assert.equal(msg.includes("##"), false, "must not contain ## Markdown heading");
+  assert.ok(msg.includes("Total: Rs. 190"), "plain Total line missing");
 });
 
 test("message ends with 'Thank you!'", () => {
