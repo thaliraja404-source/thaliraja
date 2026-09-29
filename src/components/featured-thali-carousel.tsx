@@ -238,6 +238,29 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
           })}
         </div>
       </div>
+
+      {/* Pagination Dots */}
+      {featuredItems.length > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-5">
+          {featuredItems.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex(index);
+              }}
+              aria-label={`Go to slide ${index + 1}`}
+              aria-current={currentIndex === index ? "true" : "false"}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                currentIndex === index 
+                  ? "w-6 bg-brand-600" 
+                  : "w-2 bg-gray-300 hover:bg-brand-400"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
