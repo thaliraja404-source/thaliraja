@@ -92,13 +92,13 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
 
   return (
     <section 
-      className="bg-cream-100 px-4 py-6 border-b border-cream-200 overflow-hidden touch-pan-y"
+      className="bg-cream-100 px-3 py-4 border-b border-cream-200 overflow-hidden touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="max-w-2xl mx-auto relative pb-4">
+      <div className="max-w-2xl mx-auto relative h-[320px] sm:h-[200px]">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 justify-between pointer-events-none px-1">
@@ -147,14 +147,11 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             let transform = "translate3d(0, 0, 0)";
             
             if (diff === 0) {
-              transform = "translate3d(0, 0, 0)";
               opacity = 1;
             } else if (diff === 1) {
-              transform = "translate3d(0, 8px, 0)";
-              opacity = 0.9;
+              opacity = 0; // Hidden entirely to prevent protruding
             } else if (diff === 2) {
-              transform = "translate3d(0, 16px, 0)";
-              opacity = 0.7;
+              opacity = 0;
             } else if (diff === -1) {
               transform = "translate3d(-20px, 0, 0)";
               opacity = 0;
@@ -171,7 +168,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             return (
               <div
                 key={item.id}
-                className={`w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute top-0 left-0"}`}
+                className={`w-full h-full mx-auto absolute inset-0`}
                 style={{
                   zIndex,
                   opacity,
@@ -210,7 +207,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                     )}
                   </div>
                   
-                  <div className="p-3 sm:p-4 sm:w-3/5 flex flex-col justify-center h-full">
+                  <div className="p-3 sm:p-4 sm:w-3/5 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${item.isVeg ? 'border-leaf' : 'border-red-600'}`}>
                         <span className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-leaf' : 'bg-red-600'}`}></span>
@@ -220,10 +217,10 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                       </span>
                     </div>
                     <h2 className="text-[20px] sm:text-2xl font-black text-ink-900 leading-tight mb-1">{item.name}</h2>
-                    <div className="flex flex-col mb-2 grow w-full">
+                    <div className={`flex flex-col mb-2 grow w-full ${expandedItems[item.id] ? "overflow-y-auto custom-scrollbar" : "overflow-hidden"}`}>
                       <p 
                         id={`carousel-desc-${item.id}`}
-                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full min-h-[40px] sm:min-h-[44px] ${expandedItems[item.id] ? "" : "line-clamp-2"}`}
+                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "" : "line-clamp-2"}`}
                       >
                         {item.description}
                       </p>
@@ -271,7 +268,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
 
       {/* Pagination Dots */}
       {featuredItems.length > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
+        <div className="flex justify-center items-center gap-2 mt-3">
           {featuredItems.map((_, index) => (
             <button
               key={index}
