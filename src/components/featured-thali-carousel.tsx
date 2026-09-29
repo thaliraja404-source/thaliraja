@@ -68,7 +68,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="max-w-2xl mx-auto relative h-[370px] sm:h-[200px]">
+      <div className="max-w-2xl mx-auto relative h-[320px] sm:h-[180px]">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 flex justify-between pointer-events-none px-1">
@@ -120,10 +120,10 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
               transform = "translate3d(0, 0, 0) scale(1)";
               opacity = 1;
             } else if (diff === 1) {
-              transform = "translate3d(0px, 12px, -40px) scale(0.95)";
+              transform = "translate3d(0px, 8px, -40px) scale(0.95)";
               opacity = 0.9;
             } else if (diff === 2) {
-              transform = "translate3d(0px, 24px, -80px) scale(0.9)";
+              transform = "translate3d(0px, 16px, -80px) scale(0.9)";
               opacity = 0.7;
             } else if (diff === -1) {
               transform = "translate3d(-20px, 0px, 0px) scale(1.05)";
@@ -146,6 +146,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                   zIndex,
                   opacity,
                   transform,
+                  transformOrigin: "top",
                   visibility: isVisible || diff === -1 ? "visible" : "hidden",
                   transition: prefersReducedMotion ? "opacity 0.3s ease" : "all 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
                 }}
@@ -158,7 +159,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                 <div 
                   className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 flex flex-col sm:flex-row h-full w-full ${diff !== 0 ? "cursor-pointer" : ""}`}
                 >
-                  <div className="sm:w-2/5 h-36 sm:h-auto relative overflow-hidden bg-brand-100 shrink-0">
+                  <div className="sm:w-2/5 h-32 sm:h-auto relative overflow-hidden bg-brand-100 shrink-0">
                     {item.image ? (
                       <Image 
                         src={item.image} 
@@ -179,20 +180,20 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                     )}
                   </div>
                   
-                  <div className="p-4 sm:p-5 sm:w-3/5 flex flex-col justify-center h-full">
+                  <div className="p-3 sm:p-4 sm:w-3/5 flex flex-col justify-center h-full">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${item.isVeg ? 'border-leaf' : 'border-red-600'}`}>
                         <span className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-leaf' : 'bg-red-600'}`}></span>
                       </span>
-                      <span className={`font-bold text-xs uppercase tracking-wide ${item.isVeg ? 'text-leaf' : 'text-red-600'}`}>
+                      <span className={`font-bold text-[10px] sm:text-xs uppercase tracking-wide ${item.isVeg ? 'text-leaf' : 'text-red-600'}`}>
                         {item.isVeg ? 'Pure Veg' : 'Non Veg'}
                       </span>
                     </div>
-                    <h2 className="text-[22px] sm:text-2xl font-black text-ink-900 leading-tight mb-1 sm:mb-2">{item.name}</h2>
-                    <div className="flex flex-col mb-2 sm:mb-3 grow w-full">
+                    <h2 className="text-[20px] sm:text-2xl font-black text-ink-900 leading-tight mb-1">{item.name}</h2>
+                    <div className="flex flex-col mb-2 grow w-full">
                       <p 
                         id={`carousel-desc-${item.id}`}
-                        className={`text-ink-800 text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[100px] sm:max-h-[80px] pr-2 line-clamp-none" : "line-clamp-2 sm:line-clamp-3"}`}
+                        className={`text-ink-800 text-[13px] sm:text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[80px] sm:max-h-[70px] pr-2 line-clamp-none" : "line-clamp-2"}`}
                       >
                         {item.description}
                       </p>
