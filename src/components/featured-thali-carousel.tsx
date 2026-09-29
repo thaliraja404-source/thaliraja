@@ -98,7 +98,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="max-w-2xl mx-auto relative">
+      <div className="max-w-2xl mx-auto relative pb-4">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 justify-between pointer-events-none px-1">
@@ -122,7 +122,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
         )}
 
         {/* Stacked Cards */}
-        <div className="relative w-full h-full flex justify-center perspective-[1000px]">
+        <div className="relative w-full h-full flex justify-center">
           {featuredItems.map((item, index) => {
             // Calculate relative position based on current index
             // e.g. 0 is front, 1 is back 1, 2 is back 2
@@ -144,19 +144,19 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             // Calculate styles based on position
             let zIndex = 10 - Math.abs(diff);
             let opacity = 1;
-            let transform = "translate3d(0, 0, 0) scale(1)";
+            let transform = "translate3d(0, 0, 0)";
             
             if (diff === 0) {
-              transform = "translate3d(0, 0, 0) scale(1)";
+              transform = "translate3d(0, 0, 0)";
               opacity = 1;
             } else if (diff === 1) {
-              transform = "translate3d(0px, 8px, -40px) scale(0.95)";
+              transform = "translate3d(0, 8px, 0)";
               opacity = 0.9;
             } else if (diff === 2) {
-              transform = "translate3d(0px, 16px, -80px) scale(0.9)";
+              transform = "translate3d(0, 16px, 0)";
               opacity = 0.7;
             } else if (diff === -1) {
-              transform = "translate3d(-20px, 0px, 0px) scale(1.05)";
+              transform = "translate3d(-20px, 0, 0)";
               opacity = 0;
             } else {
               opacity = 0;
@@ -171,7 +171,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             return (
               <div
                 key={item.id}
-                className={`w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute inset-0"}`}
+                className={`w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute top-0 left-0"}`}
                 style={{
                   zIndex,
                   opacity,
