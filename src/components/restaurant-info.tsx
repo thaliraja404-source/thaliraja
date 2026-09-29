@@ -91,7 +91,14 @@ export default function RestaurantInfo({ dbRestaurant }: { dbRestaurant?: Restau
           >
             <span className="text-lg">💬</span> WhatsApp Us
           </a>
-
+          <a
+            href="https://www.google.com/maps/place/Thali+Raja/@25.2902218,77.6425776,17z/data=!4m8!3m7!1s0x3970a3fda7266ab7:0x631d6e815a8a26e7!8m2!3d25.2902218!4d77.6425776!9m1!1b1!16s%2Fg%2F11y_kgxmbp?entry=ttu&g_ep=EgoyMDI2MDkyNy4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-white hover:bg-cream-50 text-ink-900 border-2 border-cream-200 rounded-xl py-3.5 font-bold text-[15px] transition-colors shadow-sm touch-manipulation cursor-pointer"
+          >
+            <span className="text-lg">⭐</span> Rate us on Google
+          </a>
         </div>
       </div>
 
