@@ -1,24 +1,24 @@
 import type { CartItem, CustomerInfo } from "@/types/order";
 import { RESTAURANT_CONFIG } from "./config";
 
-// ─── Phone Number Formatting ──────────────────────────────────────────────────
+// --- Phone Number Formatting --------------------------------------------------
 
 /**
  * Cleans and formats any phone number string into the E.164 format required
  * by WhatsApp Click-to-Chat (digits only, country code first, no +).
  *
  * Rules for Indian numbers:
- *   • 10 digits starting with 6–9  → prepend "91"
- *   • 11 digits starting with "0"  → strip leading 0, prepend "91"
- *   • 12 digits starting with "91" → already in correct format, return as-is
- *   • Anything else                → returns empty string (caller must handle)
+ *   - 10 digits starting with 6-9  => prepend "91"
+ *   - 11 digits starting with "0"  => strip leading 0, prepend "91"
+ *   - 12 digits starting with "91" => already in correct format, return as-is
+ *   - Anything else                => returns empty string (caller must handle)
  *
  * @example
- *   formatWhatsAppNumber("8269325226")    → "918269325226"
- *   formatWhatsAppNumber("+91 8269325226") → "918269325226"
- *   formatWhatsAppNumber("918269325226")  → "918269325226"
- *   formatWhatsAppNumber("08269325226")  → "918269325226"
- *   formatWhatsAppNumber("")             → ""
+ *   formatWhatsAppNumber("8269325226")     => "918269325226"
+ *   formatWhatsAppNumber("+91 8269325226") => "918269325226"
+ *   formatWhatsAppNumber("918269325226")   => "918269325226"
+ *   formatWhatsAppNumber("08269325226")    => "918269325226"
+ *   formatWhatsAppNumber("")               => ""
  */
 export function formatWhatsAppNumber(rawNumber: string): string {
   if (!rawNumber || !rawNumber.trim()) return "";
@@ -44,11 +44,11 @@ export function formatWhatsAppNumber(rawNumber: string): string {
     return digits;
   }
 
-  // Unrecognised format — return empty so callers can surface an error
+  // Unrecognised format -- return empty so callers can surface an error
   return "";
 }
 
-// ─── WhatsApp URL Builders ────────────────────────────────────────────────────
+// --- WhatsApp URL Builders ----------------------------------------------------
 
 /**
  * Generates a simple WhatsApp Click-to-Chat URL (no pre-filled message).
@@ -70,11 +70,11 @@ export function buildWhatsAppContactUrl(customNumber?: string): string {
 /**
  * Generates a WhatsApp Click-to-Chat URL with a pre-filled order message.
  *
- * @param items     Cart items (must be non-empty — caller should validate)
- * @param customer  Validated customer details
- * @param total     Calculated order total (from the cart context)
- * @param restaurantWaNumber  Optional override; defaults to RESTAURANT_CONFIG
- * @returns         Full wa.me URL with encoded message, or empty string on error
+ * @param items              Cart items (must be non-empty -- caller should validate)
+ * @param customer           Validated customer details
+ * @param total              Calculated order total (from the cart context)
+ * @param restaurantWaNumber Optional override; defaults to RESTAURANT_CONFIG
+ * @returns                  Full wa.me URL with encoded message, or empty string on error
  */
 export function buildWhatsAppOrderUrl(
   items: CartItem[],
@@ -91,8 +91,19 @@ export function buildWhatsAppOrderUrl(
   return `https://wa.me/${waNumber}?text=${encodedMessage}`;
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
+// --- Internal helpers ---------------------------------------------------------
 
+/**
+ * Builds the plain-text order message.
+ *
+ * Intentionally uses only ASCII-safe characters so the message renders
+ * correctly on every Android/iOS version and WhatsApp Web without producing
+ * replacement characters (U+FFFD). Specifically:
+ *   - No emojis  (multi-byte surrogate pairs break older Android WebViews)
+ *   - "Rs." instead of the rupee symbol (U+20B9)
+ *   - "x" instead of the multiplication sign (U+00D7)
+ *   - "---" separator instead of box-drawing characters (U+2500)
+ */
 function buildOrderMessage(
   items: CartItem[],
   customer: CustomerInfo,
@@ -101,7 +112,12 @@ function buildOrderMessage(
   const itemLines = items
     .map((item, index) => {
       const lineTotal = item.food.price * item.quantity;
-      return `${index + 1}. ${item.food.name} × ${item.quantity}  @₹${item.food.price} = ₹${lineTotal}`;
+      return (
+        `${index + 1}. ${item.food.name}` +
+        ` x ${item.quantity}` +
+        ` @ Rs. ${item.food.price}` +
+        ` = Rs. ${lineTotal}`
+      );
     })
     .join("\n");
 
@@ -111,37 +127,46 @@ function buildOrderMessage(
   );
 
   const orderTypeLabel =
-    customer.orderType === "pickup" ? "Pickup 🛍️" : "Delivery 🚚";
+    customer.orderType === "pickup" ? "Pickup" : "Delivery";
 
   const deliveryDetails =
     customer.orderType === "delivery"
-      ? `\nDelivery Address: ${customer.address}${
-          customer.landmark ? `\nLandmark: ${customer.landmark}` : ""
-        }`
+      ? "\nDelivery Address: " +
+        (customer.address ?? "") +
+        (customer.landmark ? "\nLandmark: " + customer.landmark : "")
       : "";
 
   const specialNote = customer.specialInstructions
-    ? `\nSpecial Instructions: ${customer.specialInstructions}`
+    ? "\nSpecial Instructions: " + customer.specialInstructions
     : "";
 
+  // Only show a separate subtotal line when it differs from total
+  // (e.g. when a delivery fee or discount is applied in future).
   const totalsSection =
     subtotal !== total
-      ? `Subtotal: ₹${subtotal}\nTotal: ₹${total}`
-      : `Total: ₹${total}`;
+      ? `Subtotal: Rs. ${subtotal}\nTotal: Rs. ${total}`
+      : `Total: Rs. ${total}`;
 
-  return `Hello ${RESTAURANT_CONFIG.name}! 👋
-
-I'd like to place an order:
-
-${itemLines}
-
-──────────────
-${totalsSection}
-
-Customer Details:
-Name: ${customer.name}
-Phone: ${customer.phone}
-Order Type: ${orderTypeLabel}${deliveryDetails}${specialNote}
-
-Thank you! 🙏`;
+  return (
+    `Hello ${RESTAURANT_CONFIG.name}!\n` +
+    "\n" +
+    "I'd like to place an order:\n" +
+    "\n" +
+    itemLines +
+    "\n" +
+    "\n" +
+    "---\n" +
+    "\n" +
+    `## ${totalsSection}\n` +
+    "\n" +
+    "Customer Details:\n" +
+    `Name: ${customer.name}\n` +
+    `Phone: ${customer.phone}\n` +
+    `Order Type: ${orderTypeLabel}` +
+    deliveryDetails +
+    specialNote +
+    "\n" +
+    "\n" +
+    "Thank you!"
+  );
 }
