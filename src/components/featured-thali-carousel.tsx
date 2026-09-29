@@ -31,6 +31,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -188,9 +189,29 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                       </span>
                     </div>
                     <h2 className="text-2xl font-black text-ink-900 leading-tight mb-2">{item.name}</h2>
-                    <p className="text-ink-800 text-sm mb-4 line-clamp-2 sm:line-clamp-3">
-                      {item.description}
-                    </p>
+                    <div className="flex flex-col mb-4 grow w-full">
+                      <p 
+                        id={`carousel-desc-${item.id}`}
+                        className={`text-ink-800 text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[120px] sm:max-h-[100px] pr-2 line-clamp-none" : "line-clamp-2 sm:line-clamp-3"}`}
+                      >
+                        {item.description}
+                      </p>
+                      {item.description && item.description.length > 70 && diff === 0 && (
+                        <button
+                          type="button"
+                          aria-expanded={expandedItems[item.id]}
+                          aria-controls={`carousel-desc-${item.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setExpandedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                          }}
+                          className="text-brand-600 font-bold text-xs mt-1 self-start hover:underline focus:outline-none cursor-pointer relative z-20"
+                        >
+                          {expandedItems[item.id] ? "Read less" : "Read more"}
+                        </button>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between mt-auto">
                       <span className="text-xl font-black text-brand-700">₹{item.price}</span>
                       <button 

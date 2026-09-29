@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,9 +13,12 @@ import {
   deleteMenuItemAction,
   toggleMenuItemAvailabilityAction,
   runDataMigrationAction,
+  addCategoryAction,
+  updateCategoryAction,
+  deleteCategoryAction,
 } from "./actions";
 
-type FormState = Omit<FoodItem, "id">;
+type FormState = Omit<FoodItem, "id"> & { imageFile?: File | null; imagePreviewUrl?: string | null };
 
 export default function ClientAdminPage({
   initialCategories,
@@ -29,7 +32,11 @@ export default function ClientAdminPage({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const categories = initialCategories;
+  const [categories, setCategories] = useState<UICategory[]>(initialCategories);
+  
+  useEffect(() => {
+    setCategories(initialCategories);
+  }, [initialCategories]);
   const items = initialItems;
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -38,6 +45,8 @@ export default function ClientAdminPage({
   const [filterCat, setFilterCat] = useState<string>("all");
   const [notice, setNotice] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"items" | "categories">("items");
   
   const [newItem, setNewItem] = useState<FormState>({
     category: categories.length > 0 ? categories[0].id as any : "thali",
@@ -71,18 +80,43 @@ export default function ClientAdminPage({
     setShowAddForm(false);
   }
 
+  async function uploadImage(file: File): Promise<string | null> {
+    const supabase = createClient();
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const { data, error } = await supabase.storage.from("menus").upload(fileName, file);
+    if (error) {
+      alert("Image upload failed: " + error.message);
+      return null;
+    }
+    const { data: pubData } = supabase.storage.from("menus").getPublicUrl(data.path);
+    return pubData.publicUrl;
+  }
+
   function saveEdit() {
     if (!editingId || !editForm) return;
+    setIsUploading(true);
     startTransition(async () => {
+      let finalImageUrl = editForm.image;
+      if (editForm.imageFile) {
+        const uploadedUrl = await uploadImage(editForm.imageFile);
+        if (!uploadedUrl) {
+          setIsUploading(false);
+          return; // Stop if upload failed
+        }
+        finalImageUrl = uploadedUrl;
+      }
+
       const res = await updateMenuItemAction(editingId, {
         category_id: editForm.category,
         name: editForm.name,
         description: editForm.description,
         price: editForm.price,
-        image_url: editForm.image,
+        image_url: finalImageUrl,
         is_veg: editForm.isVeg,
         is_available: editForm.available,
       });
+      setIsUploading(false);
       if (res?.error) {
         alert(res.error);
       } else {
@@ -122,16 +156,28 @@ export default function ClientAdminPage({
       alert("Name and valid price are required.");
       return;
     }
+    setIsUploading(true);
     startTransition(async () => {
+      let finalImageUrl = newItem.image;
+      if (newItem.imageFile) {
+        const uploadedUrl = await uploadImage(newItem.imageFile);
+        if (!uploadedUrl) {
+          setIsUploading(false);
+          return;
+        }
+        finalImageUrl = uploadedUrl;
+      }
+
       const res = await addMenuItemAction({
         category_id: newItem.category,
         name: newItem.name,
         description: newItem.description,
         price: newItem.price,
-        image_url: newItem.image,
+        image_url: finalImageUrl,
         is_veg: newItem.isVeg,
         is_available: newItem.available,
       });
+      setIsUploading(false);
       if (res?.error) {
         alert(res.error);
       } else {
@@ -143,6 +189,8 @@ export default function ClientAdminPage({
           description: "",
           price: 0,
           image: "",
+          imageFile: null,
+          imagePreviewUrl: null,
         });
       }
     });
@@ -226,7 +274,24 @@ export default function ClientAdminPage({
           </div>
         )}
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-6 border-b border-stone-200">
+          <button
+            onClick={() => setActiveTab("items")}
+            className={`pb-2 font-bold text-sm border-b-2 transition-colors ${activeTab === "items" ? "border-brand-600 text-brand-700" : "border-transparent text-stone-500 hover:text-stone-700"}`}
+          >
+            Menu Items
+          </button>
+          <button
+            onClick={() => setActiveTab("categories")}
+            className={`pb-2 font-bold text-sm border-b-2 transition-colors ${activeTab === "categories" ? "border-brand-600 text-brand-700" : "border-transparent text-stone-500 hover:text-stone-700"}`}
+          >
+            Manage Categories
+          </button>
+        </div>
+
+        {activeTab === "items" ? (
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setFilterCat("all")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0 ${
@@ -261,15 +326,19 @@ export default function ClientAdminPage({
               inputCls={inputCls}
               categories={categories}
               disabled={isPending}
+              onCategoryCreated={(cat) => {
+                setCategories(prev => [...prev, cat]);
+                setNewItem(prev => ({ ...prev, category: cat.id as any }));
+              }}
             />
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={addItem}
-                disabled={isPending}
+                disabled={isPending || isUploading}
                 className="bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 touch-manipulation cursor-pointer"
               >
-                {isPending ? "Adding..." : "Add Item"}
+                {isPending || isUploading ? "Saving..." : "Add Item"}
               </button>
               <button
                 type="button"
@@ -301,15 +370,19 @@ export default function ClientAdminPage({
                   inputCls={inputCls} 
                   categories={categories} 
                   disabled={isPending}
+                  onCategoryCreated={(cat) => {
+                    setCategories(prev => [...prev, cat]);
+                    setEditForm(prev => prev ? ({ ...prev, category: cat.id as any } as FormState) : null);
+                  }}
                 />
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
                     onClick={saveEdit}
-                    disabled={isPending}
+                    disabled={isPending || isUploading}
                     className="bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 touch-manipulation cursor-pointer"
                   >
-                    {isPending ? "Saving..." : "Save Changes"}
+                    {isPending || isUploading ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     type="button"
@@ -389,6 +462,16 @@ export default function ClientAdminPage({
             );
           })}
         </div>
+        </>
+        ) : (
+          <CategoryManager 
+            categories={categories} 
+            items={items} 
+            isPending={isPending} 
+            startTransition={startTransition} 
+            showNotice={showNotice}
+          />
+        )}
       </main>
     </div>
   );
@@ -399,14 +482,48 @@ function ItemForm({
   onChange,
   inputCls,
   categories,
-  disabled
+  disabled,
+  onCategoryCreated
 }: {
   form: FormState;
   onChange: (f: FormState) => void;
   inputCls: string;
   categories: UICategory[];
   disabled: boolean;
+  onCategoryCreated?: (c: UICategory) => void;
 }) {
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [isCreatingCat, setIsCreatingCat] = useState(false);
+  const [catError, setCatError] = useState("");
+
+  const handleCreateCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) {
+      setCatError("Category name is required.");
+      return;
+    }
+    if (name.length > 50) {
+      setCatError("Name is too long.");
+      return;
+    }
+
+    setIsCreatingCat(true);
+    setCatError("");
+    const res = await addCategoryAction({ name, emoji: "🍽️", display_order: categories.length });
+    setIsCreatingCat(false);
+
+    if (res.error) {
+      setCatError(res.error);
+    } else if (res.success && res.id) {
+      setShowNewCat(false);
+      setNewCatName("");
+      if (onCategoryCreated) {
+        onCategoryCreated({ id: res.id, label: name, emoji: "🍽️" });
+      }
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
@@ -431,38 +548,127 @@ function ItemForm({
       </div>
       <div className="sm:col-span-2">
         <label className="text-xs font-semibold text-stone-600 mb-1 block">Description</label>
-        <input
-          type="text"
+        <textarea
           value={form.description || ""}
           onChange={(e) => onChange({ ...form, description: e.target.value })}
           className={inputCls}
+          rows={3}
           disabled={disabled}
         />
       </div>
       <div>
         <label className="text-xs font-semibold text-stone-600 mb-1 block">Category</label>
-        <select
-          value={form.category}
-          onChange={(e) => onChange({ ...form, category: e.target.value as any })}
-          className={inputCls}
-          disabled={disabled}
-        >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.emoji} {c.label}
-            </option>
-          ))}
-        </select>
+        {!showNewCat ? (
+          <select
+            value={form.category}
+            onChange={(e) => {
+              if (e.target.value === "NEW_CATEGORY") {
+                setShowNewCat(true);
+              } else {
+                onChange({ ...form, category: e.target.value as any });
+              }
+            }}
+            className={inputCls}
+            disabled={disabled}
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.emoji} {c.label}
+              </option>
+            ))}
+            <option value="NEW_CATEGORY" className="font-bold text-brand-600">+ Create new category...</option>
+          </select>
+        ) : (
+          <div className="flex flex-col gap-2 p-3 bg-stone-50 border border-stone-200 rounded-lg">
+            <input 
+              type="text" 
+              placeholder="New Category Name" 
+              value={newCatName} 
+              onChange={e => setNewCatName(e.target.value)} 
+              className={inputCls} 
+              autoFocus 
+              disabled={isCreatingCat || disabled}
+            />
+            {catError && <p className="text-red-600 text-xs font-medium">{catError}</p>}
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={handleCreateCategory} 
+                disabled={isCreatingCat || disabled}
+                className="bg-brand-600 active:bg-brand-700 text-white text-xs font-bold px-3 py-2 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {isCreatingCat ? "Saving..." : "Create"}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setShowNewCat(false); setCatError(""); setNewCatName(""); }} 
+                disabled={isCreatingCat || disabled}
+                className="text-stone-500 text-xs font-bold px-3 py-2 rounded-lg hover:bg-stone-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      <div>
-        <label className="text-xs font-semibold text-stone-600 mb-1 block">Image URL</label>
-        <input
-          type="url"
-          value={form.image || ""}
-          onChange={(e) => onChange({ ...form, image: e.target.value })}
-          className={inputCls}
-          disabled={disabled}
-        />
+      <div className="sm:col-span-2">
+        <label className="text-xs font-semibold text-stone-600 mb-1 block">Image</label>
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 relative border border-stone-200">
+            {(form.imagePreviewUrl || form.image) ? (
+              <Image src={form.imagePreviewUrl || form.image!} alt="Preview" fill className="object-cover" sizes="64px" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs">No img</div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2 w-full">
+            <input
+              type="file"
+              accept="image/jpeg, image/png, image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) {
+                  onChange({ ...form, imageFile: null, imagePreviewUrl: null });
+                  return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                  alert("File must be less than 5MB");
+                  e.target.value = "";
+                  return;
+                }
+                onChange({
+                  ...form,
+                  imageFile: file,
+                  imagePreviewUrl: URL.createObjectURL(file),
+                  image: "", // Clear manual URL if they upload a file
+                });
+              }}
+              className="block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50"
+              disabled={disabled}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-stone-500">OR URL:</span>
+              <input
+                type="url"
+                value={form.image || ""}
+                onChange={(e) => onChange({ ...form, image: e.target.value, imageFile: null, imagePreviewUrl: null })}
+                className={inputCls}
+                disabled={disabled}
+                placeholder="https://..."
+              />
+            </div>
+            {(form.image || form.imagePreviewUrl) && (
+              <button
+                type="button"
+                onClick={() => onChange({ ...form, image: "", imageFile: null, imagePreviewUrl: null })}
+                disabled={disabled}
+                className="text-xs text-red-600 font-medium hover:underline"
+              >
+                Remove Image
+              </button>
+            )}
+          </div>
+        </div>
       </div>
       <div className="flex items-center gap-4 sm:col-span-2">
         <label className="flex items-center gap-2 cursor-pointer text-sm">
@@ -486,6 +692,154 @@ function ItemForm({
           <span className="font-medium text-stone-700">Available</span>
         </label>
       </div>
+    </div>
+  );
+}
+
+function CategoryManager({
+  categories,
+  items,
+  isPending,
+  startTransition,
+  showNotice
+}: {
+  categories: UICategory[];
+  items: FoodItem[];
+  isPending: boolean;
+  startTransition: (cb: () => void) => void;
+  showNotice: (msg: string) => void;
+}) {
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmoji, setEditEmoji] = useState("");
+  
+  const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
+  const [reassignToId, setReassignToId] = useState<string>("");
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleEdit = (cat: UICategory) => {
+    setEditingCatId(cat.id);
+    setEditName(cat.label);
+    setEditEmoji(cat.emoji || "🍽️");
+  };
+
+  const saveEdit = (id: string) => {
+    if (!editName.trim()) return;
+    startTransition(async () => {
+      const res = await updateCategoryAction(id, { name: editName, emoji: editEmoji });
+      if (res?.error) {
+        alert(res.error);
+      } else {
+        showNotice("✅ Category updated.");
+        setEditingCatId(null);
+      }
+    });
+  };
+
+  const initiateDelete = (cat: UICategory, count: number) => {
+    setDeletingCatId(cat.id);
+    setDeleteError("");
+    setReassignToId("");
+  };
+
+  const confirmDelete = (catId: string, count: number) => {
+    if (count > 0 && !reassignToId) {
+      setDeleteError("You must select a category to reassign the existing menu items.");
+      return;
+    }
+    
+    startTransition(async () => {
+      const res = await deleteCategoryAction(catId, count > 0 ? reassignToId : undefined);
+      if (res?.error) {
+        setDeleteError(res.error);
+      } else {
+        showNotice("🗑️ Category deleted.");
+        setDeletingCatId(null);
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {categories.map(cat => {
+        const count = items.filter(i => i.category === cat.id).length;
+        const isEditing = editingCatId === cat.id;
+        const isDeleting = deletingCatId === cat.id;
+
+        return (
+          <div key={cat.id} className="bg-white rounded-xl border border-stone-200 p-4">
+            {isEditing ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input 
+                  type="text" 
+                  value={editEmoji} 
+                  onChange={e => setEditEmoji(e.target.value)} 
+                  className="w-16 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none" 
+                  placeholder="Emoji"
+                  disabled={isPending}
+                />
+                <input 
+                  type="text" 
+                  value={editName} 
+                  onChange={e => setEditName(e.target.value)} 
+                  className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none" 
+                  autoFocus
+                  disabled={isPending}
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(cat.id)} disabled={isPending} className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50">Save</button>
+                  <button onClick={() => setEditingCatId(null)} disabled={isPending} className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm font-bold">Cancel</button>
+                </div>
+              </div>
+            ) : isDeleting ? (
+              <div className="space-y-3">
+                <p className="text-sm text-stone-800">
+                  Are you sure you want to delete <strong>{cat.emoji} {cat.label}</strong>?
+                </p>
+                {count > 0 && (
+                  <div className="bg-red-50 p-3 rounded-lg border border-red-100 space-y-2">
+                    <p className="text-sm text-red-800 font-medium">
+                      This category contains {count} menu item{count > 1 ? 's' : ''}. You must move them to another category.
+                    </p>
+                    <select 
+                      value={reassignToId} 
+                      onChange={e => setReassignToId(e.target.value)} 
+                      className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none"
+                      disabled={isPending}
+                    >
+                      <option value="">Select destination category...</option>
+                      {categories.filter(c => c.id !== cat.id).map(c => (
+                        <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {deleteError && <p className="text-xs text-red-600 font-medium">{deleteError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => confirmDelete(cat.id, count)} disabled={isPending} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50">
+                    {count > 0 ? "Reassign & Delete" : "Confirm Delete"}
+                  </button>
+                  <button onClick={() => { setDeletingCatId(null); setDeleteError(""); }} disabled={isPending} className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm font-bold">Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{cat.emoji}</span>
+                  <div>
+                    <h3 className="font-bold text-stone-800">{cat.label}</h3>
+                    <p className="text-xs text-stone-500">{count} item{count !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEdit(cat)} disabled={isPending} className="text-xs font-semibold px-3 py-2 rounded-lg border border-stone-200 text-stone-600 bg-stone-50 hover:bg-stone-100 transition-colors disabled:opacity-50">Edit</button>
+                  <button onClick={() => initiateDelete(cat, count)} disabled={isPending} className="text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50">Delete</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
