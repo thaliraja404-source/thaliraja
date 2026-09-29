@@ -68,7 +68,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="max-w-2xl mx-auto relative h-[400px] sm:h-[200px]">
+      <div className="max-w-2xl mx-auto relative h-[450px] sm:h-[240px]">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 flex justify-between pointer-events-none px-1">
@@ -158,7 +158,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                 <div 
                   className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 flex flex-col sm:flex-row h-full w-full ${diff !== 0 ? "cursor-pointer" : ""}`}
                 >
-                  <div className="sm:w-2/5 h-40 sm:h-auto relative overflow-hidden bg-brand-100 shrink-0">
+                  <div className="sm:w-2/5 h-48 sm:h-auto relative overflow-hidden bg-brand-100 shrink-0">
                     {item.image ? (
                       <Image 
                         src={item.image} 
@@ -192,7 +192,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
                     <div className="flex flex-col mb-4 grow w-full">
                       <p 
                         id={`carousel-desc-${item.id}`}
-                        className={`text-ink-800 text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[100px] sm:max-h-[80px] pr-2 line-clamp-none" : "line-clamp-2 sm:line-clamp-3"}`}
+                        className={`text-ink-800 text-sm whitespace-pre-line break-words w-full ${expandedItems[item.id] ? "overflow-y-auto max-h-[120px] sm:max-h-[100px] pr-2 line-clamp-none" : "line-clamp-2 sm:line-clamp-3"}`}
                       >
                         {item.description}
                       </p>
