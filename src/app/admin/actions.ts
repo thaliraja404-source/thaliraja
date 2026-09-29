@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -20,11 +20,27 @@ async function verifyAdminAuth() {
 export async function addCategoryAction(data: { name: string; emoji: string; display_order: number }) {
   try {
     const { admin, restaurantId } = await verifyAdminAuth();
-    const { error } = await admin.from("categories").insert({ ...data, restaurant_id: restaurantId });
+    
+    const { data: existing } = await admin
+      .from("categories")
+      .select("id")
+      .eq("restaurant_id", restaurantId)
+      .ilike("name", data.name.trim())
+      .maybeSingle();
+      
+    if (existing) {
+      return { error: `A category named "${data.name.trim()}" already exists.` };
+    }
+
+    const { data: newCat, error } = await admin.from("categories").insert({ 
+      ...data, 
+      name: data.name.trim(),
+      restaurant_id: restaurantId 
+    }).select("id").single();
     if (error) return { error: error.message };
     revalidatePath("/admin");
     revalidatePath("/menu");
-    return { success: true };
+    return { success: true, id: newCat.id };
   } catch (err: any) {
     return { error: err.message };
   }
@@ -34,6 +50,22 @@ export async function updateCategoryAction(id: string, data: { name?: string; em
   try {
     requireUUID(id, "category ID");
     const { admin, restaurantId } = await verifyAdminAuth();
+
+    if (data.name) {
+      const name = data.name.trim();
+      const { data: existing } = await admin
+        .from("categories")
+        .select("id")
+        .eq("restaurant_id", restaurantId)
+        .ilike("name", name)
+        .neq("id", id)
+        .maybeSingle();
+      if (existing) {
+        return { error: `A category named "${name}" already exists.` };
+      }
+      data.name = name;
+    }
+
     const { error } = await admin.from("categories").update(data).eq("id", id).eq("restaurant_id", restaurantId);
     if (error) return { error: error.message };
     revalidatePath("/admin");
@@ -51,17 +83,31 @@ function requireUUID(id: string, name: string = "ID") {
   return id;
 }
 
-export async function deleteCategoryAction(id: string) {
+export async function deleteCategoryAction(id: string, reassignToId?: string) {
   try {
     requireUUID(id, "category ID");
     const { admin, restaurantId } = await verifyAdminAuth();
-    const { count, error: countErr } = await admin
-      .from("menu_items")
-      .select("*", { count: "exact", head: true })
-      .eq("category_id", id);
-
-    if (countErr) return { error: countErr.message };
-    if (count && count > 0) return { error: "Cannot delete category because it contains menu items." };
+    
+    if (reassignToId) {
+      requireUUID(reassignToId, "destination category ID");
+      if (id === reassignToId) {
+        return { error: "Cannot reassign to the same category." };
+      }
+      const { error: updateErr } = await admin
+        .from("menu_items")
+        .update({ category_id: reassignToId })
+        .eq("category_id", id)
+        .eq("restaurant_id", restaurantId);
+        
+      if (updateErr) return { error: "Failed to reassign items: " + updateErr.message };
+    } else {
+      const { count, error: countErr } = await admin
+        .from("menu_items")
+        .select("*", { count: "exact", head: true })
+        .eq("category_id", id);
+      if (countErr) return { error: countErr.message };
+      if (count && count > 0) return { error: "Cannot delete category because it contains menu items." };
+    }
 
     const { error } = await admin.from("categories").delete().eq("id", id).eq("restaurant_id", restaurantId);
     if (error) return { error: error.message };

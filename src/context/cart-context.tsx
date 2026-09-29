@@ -21,7 +21,8 @@ type CartAction =
   | { type: "INCREASE"; id: string }
   | { type: "DECREASE"; id: string }
   | { type: "REMOVE"; id: string }
-  | { type: "CLEAR" };
+  | { type: "CLEAR" }
+  | { type: "INIT"; items: CartItem[] };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -61,6 +62,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case "CLEAR": {
       return { items: [] };
     }
+    case "INIT": {
+      return { items: action.items };
+    }
     default:
       return state;
   }
@@ -79,6 +83,7 @@ type CartContextType = {
   removeItem: (id: string) => void;
   clearCart: () => void;
   getQuantity: (id: string) => number;
+  isLoaded: boolean;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -87,6 +92,34 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("thali_raja_cart_v1");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // Filter out items with invalid quantities just in case
+          const validItems = parsed.filter(i => i && i.food && i.food.id && typeof i.quantity === 'number' && i.quantity > 0);
+          dispatch({ type: "INIT", items: validItems });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore cart", e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem("thali_raja_cart_v1", JSON.stringify(state.items));
+    } catch (e) {
+      console.error("Failed to save cart", e);
+    }
+  }, [state.items, isLoaded]);
 
   const addItem = useCallback(
     (food: FoodItem) => dispatch({ type: "ADD_ITEM", food }),
@@ -133,6 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       clearCart,
       getQuantity,
+      isLoaded,
     }),
     [
       state.items,
@@ -145,6 +179,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       clearCart,
       getQuantity,
+      isLoaded,
     ]
   );
 

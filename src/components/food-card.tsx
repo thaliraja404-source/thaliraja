@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import type { FoodItem } from "@/types/menu";
@@ -13,6 +14,8 @@ export default function FoodCard({ item }: FoodCardProps) {
     useCart();
   const quantity = getQuantity(item.id);
   const isUnavailable = !item.available;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isLongDescription = item.description && item.description.length > 70;
 
   return (
     <article
@@ -70,9 +73,28 @@ export default function FoodCard({ item }: FoodCardProps) {
             ₹{item.price}
           </span>
         </div>
-        <p className="text-ink-800/80 text-[13px] leading-relaxed line-clamp-2 mb-4 grow">
-          {item.description}
-        </p>
+        <div className="mb-4 grow flex flex-col items-start w-full">
+          <p 
+            id={`desc-${item.id}`}
+            className={`text-ink-800/80 text-[13px] leading-relaxed whitespace-pre-line w-full break-words ${isExpanded ? "line-clamp-none" : "line-clamp-2"}`}
+          >
+            {item.description}
+          </p>
+          {isLongDescription && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsExpanded(!isExpanded);
+              }}
+              aria-expanded={isExpanded}
+              aria-controls={`desc-${item.id}`}
+              className="text-brand-600 font-bold text-[12px] mt-1 hover:underline focus:outline-none"
+            >
+              {isExpanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
 
         {/* Add / Quantity control */}
         {isUnavailable ? (

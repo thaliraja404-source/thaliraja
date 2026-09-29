@@ -40,9 +40,7 @@ export default function RestaurantHeader({ dbRestaurant }: { dbRestaurant?: Rest
   const name = dbRestaurant?.name || RESTAURANT_CONFIG.name;
   const tagline = dbRestaurant?.tagline || RESTAURANT_CONFIG.tagline;
   const mapsUrl = dbRestaurant?.maps_url || RESTAURANT_CONFIG.googleMapsUrl;
-  const waUrl = dbRestaurant?.whatsapp_number
-    ? `https://wa.me/${dbRestaurant.whatsapp_number.replace(/\D/g, "")}`
-    : buildWhatsAppContactUrl();
+  const waUrl = buildWhatsAppContactUrl(dbRestaurant?.whatsapp_number || undefined);
 
   return (
     <header className="bg-cream-50 border-b border-cream-200 sticky top-0 z-30 shadow-sm">

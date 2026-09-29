@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useTransition, useEffect, useCallback } from "react";
+import { useState, useTransition, useEffect, useCallback, useRef } from "react";
 import { updateRestaurantAction, uploadMenuImageAction } from "@/app/admin/actions";
 import type { Restaurant } from "@/types/database";
+import { QRCodeSVG } from "qrcode.react";
 
 function toStr(v: string | null | undefined) { return v ?? ""; }
+
+function Spinner() {
+  return (
+    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
+  );
+}
 
 interface FormState {
   name: string; tagline: string; description: string; phone: string;
@@ -46,6 +56,13 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
     (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setSuccess(false);
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      
+      // Auto-resize for textareas
+      if (e.target.tagName.toLowerCase() === 'textarea') {
+        const target = e.target as HTMLTextAreaElement;
+        target.style.height = 'auto';
+        target.style.height = `${target.scrollHeight}px`;
+      }
     }, []
   );
 
@@ -79,15 +96,26 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
     "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
     "disabled:opacity-50 disabled:cursor-not-allowed transition-colors");
 
-  const Spinner = () => (
-    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-    </svg>
-  );
+  const qrRef = useRef<HTMLDivElement>(null);
+  const qrUrl = "https://thaliraja.vercel.app/";
+  const downloadQR = () => {
+    if (!qrRef.current) return;
+    const svg = qrRef.current.querySelector("svg");
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ThaliRaja-Menu-QR.svg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-cream-200 overflow-hidden">
+    <div className="space-y-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-cream-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-cream-100">
         <h2 className="text-xl font-black text-ink-900">General Settings</h2>
@@ -120,11 +148,11 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
           </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-ink-900">Tagline</label>
-            <input id="settings-tagline" name="tagline" value={form.tagline} onChange={set("tagline")} disabled={isBusy} placeholder="e.g. Freshly made with love" className={cls} />
+            <textarea id="settings-tagline" name="tagline" value={form.tagline} onChange={set("tagline")} disabled={isBusy} rows={2} placeholder="e.g. Freshly made with love" className={cls + " resize-none overflow-hidden"} />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <label className="block text-sm font-bold text-ink-900">Description</label>
-            <textarea id="settings-description" name="description" value={form.description} onChange={set("description")} disabled={isBusy} rows={3} placeholder="A short description of your restaurant" className={cls + " resize-y min-h-[80px]"} />
+            <textarea id="settings-description" name="description" value={form.description} onChange={set("description")} disabled={isBusy} rows={3} placeholder="A short description of your restaurant" className={cls + " resize-none overflow-hidden"} />
           </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-ink-900">Phone Number</label>
@@ -189,6 +217,30 @@ export default function ClientSettingsPage({ restaurant }: { restaurant: Restaur
           </button>
         </div>
       </form>
+      </div>
+
+      {/* QR Code Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-cream-200 overflow-hidden p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
+        <div className="flex-1 space-y-4">
+          <h2 className="text-2xl font-black text-ink-900">Digital Menu QR Code</h2>
+          <p className="text-ink-800 leading-relaxed max-w-md">
+            Display this QR code on your tables or counter. When customers scan it with their phone camera, it will instantly open your live digital menu for easy WhatsApp ordering.
+          </p>
+          <button 
+            onClick={downloadQR}
+            className="mt-2 inline-flex items-center gap-2 font-bold py-3 px-6 rounded-full shadow-sm bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white transition-all cursor-pointer"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Download QR Code (SVG)
+          </button>
+        </div>
+        <div className="shrink-0 p-6 bg-white border-2 border-brand-200 rounded-2xl shadow-sm flex flex-col items-center gap-3">
+          <div ref={qrRef} className="bg-white p-2">
+            <QRCodeSVG value={qrUrl} size={180} level="H" fgColor="#2B1D18" />
+          </div>
+          <span className="font-bold text-sm text-brand-700 uppercase tracking-widest">Scan for Menu</span>
+        </div>
+      </div>
     </div>
   );
 }

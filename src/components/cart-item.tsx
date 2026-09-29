@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/context/cart-context";
 import type { CartItem } from "@/types/order";
 
@@ -9,6 +10,29 @@ interface CartItemRowProps {
 
 export default function CartItemRow({ item }: CartItemRowProps) {
   const { increaseQuantity, decreaseQuantity, removeItem } = useCart();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isTruncatable, setIsTruncatable] = useState(false);
+  const clampedRef = useRef<HTMLParagraphElement>(null);
+  const fullRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (clampedRef.current && fullRef.current) {
+        const clampedHeight = clampedRef.current.clientHeight;
+        const fullHeight = fullRef.current.clientHeight;
+        // Adding 2px tolerance for sub-pixel rendering issues
+        setIsTruncatable(fullHeight > clampedHeight + 2);
+      }
+    };
+
+    checkTruncation();
+
+    const resizeObserver = new ResizeObserver(() => checkTruncation());
+    if (clampedRef.current) resizeObserver.observe(clampedRef.current);
+    if (fullRef.current) resizeObserver.observe(fullRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [item.food.description]);
 
   return (
     <div className="flex items-center gap-3 py-4 border-b border-cream-100 last:border-0 animate-fade-in">
@@ -25,12 +49,54 @@ export default function CartItemRow({ item }: CartItemRowProps) {
         />
       </div>
 
-      {/* Name & price */}
+      {/* Name, description & price */}
       <div className="flex-1 min-w-0">
         <p className="font-extrabold text-ink-900 text-[15px] leading-snug truncate">
           {item.food.name}
         </p>
-        <p className="text-ink-800/70 text-xs font-medium mt-0.5">₹{item.food.price} each</p>
+        
+        {item.food.description && (
+          <div className="mt-1 relative">
+            {/* Invisible measurement clones */}
+            <p 
+              ref={clampedRef} 
+              className="absolute top-0 left-0 w-full invisible pointer-events-none line-clamp-2 text-ink-800 text-[13px] leading-relaxed whitespace-pre-line break-words"
+              aria-hidden="true"
+            >
+              {item.food.description}
+            </p>
+            <p 
+              ref={fullRef} 
+              className="absolute top-0 left-0 w-full invisible pointer-events-none text-ink-800 text-[13px] leading-relaxed whitespace-pre-line break-words"
+              aria-hidden="true"
+            >
+              {item.food.description}
+            </p>
+
+            {/* Visible text */}
+            <p 
+              id={`cart-desc-${item.food.id}`}
+              className={`text-ink-800 text-[13px] leading-relaxed whitespace-pre-line break-words ${isExpanded ? "" : "line-clamp-2"}`}
+            >
+              {item.food.description}
+            </p>
+            {isTruncatable && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                aria-expanded={isExpanded}
+                aria-controls={`cart-desc-${item.food.id}`}
+                className="text-brand-600 font-bold text-[12px] mt-1 hover:underline focus:outline-none"
+              >
+                {isExpanded ? "Read less" : "Read more"}
+              </button>
+            )}
+          </div>
+        )}
+        
+        <p className={`text-ink-800/70 text-xs font-medium ${item.food.description ? "mt-1.5" : "mt-0.5"}`}>
+          ₹{item.food.price} each
+        </p>
       </div>
 
       {/* Quantity controls */}
