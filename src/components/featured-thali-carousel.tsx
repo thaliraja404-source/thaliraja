@@ -71,7 +71,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
       <div className="max-w-2xl mx-auto relative min-h-[320px] sm:min-h-[180px]">
         {/* Navigation controls - only show if there's more than 1 item */}
         {featuredItems.length > 1 && (
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 flex justify-between pointer-events-none px-1">
+          <div className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 justify-between pointer-events-none px-1">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); prevSlide(); }}
@@ -141,7 +141,7 @@ export default function FeaturedThaliCarousel({ items, categories }: FeaturedTha
             return (
               <div
                 key={item.id}
-                className={`w-full max-w-[95%] sm:max-w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute inset-0"}`}
+                className={`w-full mx-auto ${diff === 0 ? "relative z-10" : "absolute inset-0"}`}
                 style={{
                   zIndex,
                   opacity,
